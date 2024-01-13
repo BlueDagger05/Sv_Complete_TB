@@ -4,7 +4,7 @@ package agent_pkg;
 	import generator_pkg::Generator;
 	class agent;
 
-		// Transaction class object -> agt_trnx
+		// Transactionear class object -> agt_trnx
 		Transaction agt_trnx;
 
 		// Mailbox to send processed data to the driver
