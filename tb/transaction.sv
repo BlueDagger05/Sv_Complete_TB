@@ -4,11 +4,11 @@
 // Transaction package which includes Transaction class
 // To avoid multiple inclusions of classes
 
-package Trasaction;
+package transaction_pkg;
 `include "defines.sv"
 
-class Transaction;
 import apb_states::*;
+class Transaction;
 
 //------------------------------
 // Transaction fields
@@ -25,9 +25,12 @@ import apb_states::*;
 //------------------------------
 // Constraints
 //------------------------------
-	constraint c_PADDR  {PADDR  inside [0:10];}
-	constraint c_PWDATA {PWDATA inside [0:20];}
+	constraint c_PADDR  { PADDR  inside [0:10]; }
+	constraint c_PWDATA { PWDATA inside [0:20]; }
 
+	// constraint for weighted dist of APB-slave states
+	constraint c_st {st dist { 2:= 5, 0:=3, 1:=7}; }
+		
 endclass: Transaction
 
-endpackage: Transaction
+endpackage: transaction_pkg

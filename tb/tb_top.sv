@@ -1,4 +1,6 @@
 `include "interface.sv"
+import test_pkg::Test;
+
 module tb_top;
 //----------------------------------------
 // local signals and parameters
@@ -15,14 +17,12 @@ module tb_top;
 // connceting DUT with modport DUT defined interface
 	design DUT(ifc.DUT);
 
-
 // Generating Clock	
 	initial
 	begin: clock_generation
-		clk = 1'b0;
+		clk = 1'b;
 		forever #(timePeriod/2) clk = ~clk
 	end: clock_generation
-
 
 
 // Generating Reset
@@ -32,21 +32,10 @@ module tb_top;
 		forever #(resetPeriod/2) rst = ~rst;
 	end: reset_generation
 
-
-
 // Invoking Test
 // Binding sample_test with modport TEST
-	sample_test test(ifc.TEST);
-	initial
-	begin: invoking_test
-
-		// running test
-		fork
-			test.run();
-		join_none
-	
-	end: invoking_test
-
-
+// connecting test program with interface
+// Test t1(.ifc(ifc.TEST);
+Test t1(.ifc(ifc.TEST));
 
 endmodule : tb_top
