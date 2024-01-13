@@ -22,6 +22,7 @@ package agent_pkg;
 
 		// run task which will process the raw data sent from the transaction class
 		// Correct data will be sent to the Driver 
+
 		task run(int numOfPackets);
 			// allocating memory to the object
 			trnx = new();
@@ -30,9 +31,32 @@ package agent_pkg;
 				// Using get method of mailbox to get trnx object values
 				gen2agt.get(trnx)
 
-				// right now empty 
-				.....
-				.....
+				// copying trnx object 
+				trnx_c = trnx.copy();
+
+				// Toggling case as per randomized states
+				case(trnx.st)
+
+					//IDLE state
+					st.IDLE:
+					begin
+						// Do nothing
+					end
+	
+					// Setup State
+					st.SETUP:
+					begin
+						// input addr and data must be stable in setup phase
+						agt2drv.put(trnx_c);
+					end
+	
+					// Access State
+					st.ACCESS:
+					begin
+						// Do nothing
+					end
+
+				endcase // current_state
 			end
 		endtask : run
 

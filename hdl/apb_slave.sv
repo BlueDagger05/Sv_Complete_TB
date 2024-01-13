@@ -1,8 +1,12 @@
 `timescale 1ns / 1ps
 `include "packages.sv"
-module apb_slave #(parameter DATA_WIDTH = 8,
-                   parameter ADDR_WIDTH = 4)		   
+module apb_slave #(apb_slave_ifc.APB_SLV ifc,
+                   parameter DATA_WIDTH = 8,
+                   parameter ADDR_WIDTH = 4);		   
+
+import apb_pkg::*;
 import apb_states::*;
+/*
 (
    output   reg [DATA_WIDTH -1:0] PRDATA,
    input   wire                   PSELx,
@@ -15,6 +19,7 @@ import apb_states::*;
    input   wire                   PCLK,
    input   wire [DATA_WIDTH -1:0] PWDATA
 );
+*/
 
 localparam mem_width = 1<<ADDR_WIDTH;
 
@@ -26,16 +31,17 @@ reg [DATA_WIDTH -1:0] memory [mem_width-1:0];
 
 reg [1:0] state;
 
-    always_ff @(posedge PCLK or negedge PRESETn) begin : proc_
-        if(~PRESETn) begin
+    always_ff @(posedge ifc.PCLK or negedge ifc.PRESETn)
+    begin 
+        if(~ifc.PRESETn) begin
             state <= IDLE;
         end else begin
             case(state)
                 IDLE: 
                 begin
-                    if(!PSELx)
+                    if(!ifc.PSELx)
                     begin
-                        {memory[PADDR],PRDATA} <= 16'h0000_0000_0000_0000;
+                        {memory[ifc.PADDR], ifc.PRDATA} <= 16'h0000_0000_0000_0000;
                         state <= IDLE;
                     end
                     else if(PSELx)
@@ -44,20 +50,20 @@ reg [1:0] state;
 
                 SETUP:
                 begin
-                    if(PSELx && PWRITE)
+                    if(ifc.PSELx && ifc.PWRITE)
                     begin
-                        memory[PADDR] <= PWDATA;
-                        if(PENABLE)
+                        memory[ifc.PADDR] <= ifc.PWDATA;
+                        if(ifc.PENABLE)
                             state <= ACCESS;
                         else
                             state <= SETUP;                            
                     end
                     
-                    else if(PREADY && PSELx && !PWRITE) begin
-                        PRDATA <= memory[PADDR];
+                    else if(ifc.PREADY && ifc.PSELx && !ifc.PWRITE) begin
+                        ifc.PRDATA <= memory[ifc.PADDR];
                         
                         // if PENABLE == HIGH MOVE TO ACCESS STATE
-                        if(PENABLE)
+                        if(ifc.PENABLE)
                             state <= ACCESS;
                             
                         // ELSE STAY IN SETUP STATE                            
@@ -68,9 +74,9 @@ reg [1:0] state;
 
                 ACCESS:
                 begin
-                    if(PSELx && PENABLE && !PREADY)
+                    if(ifc.PSELx && ifc.PENABLE && !ifc.PREADY)
                         state <= ACCESS;
-                    else if(PSELx && !PENABLE && PREADY) 
+                    else if(ifc.PSELx && !ifc.PENABLE && ifc.PREADY) 
                         state <= SETUP;
                     else
                         state <= IDLE;

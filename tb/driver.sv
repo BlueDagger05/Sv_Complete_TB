@@ -21,53 +21,76 @@ class Driver;
 //----------------------------------------
 // Functions
 //----------------------------------------
-extern function void drv_dp();
+	extern virtual function void drv_dp();
 	
 //----------------------------------------
 // APB Slave Reset task
 //----------------------------------------
-	task rst_sv();
-		// wait for PRESETn to transit low and drive default '0' 
-		// value to inputs and remain in IDLE state
-		wait(!vif.PRESETn)
-		begin
-			vif.PWDATA <= 8'h0000_0000;
-			vif.PADDR  <= 8'h0000_0000;
-			vif.ENABLE <= 1'b0;
-			$display("@%0t :: PRESETn ACTIVE",$time);
-			$display("----------------------------\n",);
-		end
+	extern virtual task rst_apb();
 
-		// After Two clock edges drive the data
-		repeat(2) @(posedge vif.PCLK);
+//----------------------------------------
+// APB Slave Main run task
+//----------------------------------------
+	extern virtual task run();
 
-	endtask : rst_sv
-
-// Main run task
-	task run();
-		forever 
-		begin
-
-			// creating new transaction object
-			trnx = new();
-
-			// Using get method to get pin activity for DUT
-			agt2drv.get(trnx);
-
-			// Deep copying trnx object to trnx_c
-			trnx_c = trnx.copy();
-
-			vif.PENABLE <= trnx.PREADY;
-			vif.PADDR   <= trnx.PADDR;
-			vif.PWRITE  <= trnx.PWRITE;
-			vif.PWDATA	<= trnx.PWDATA;
-		end
-	endtask : run
 
 endclass : Driver
 
-function void Driver::drv_dp();
-	$display("PKT_ID [%0d] ",);
+//----------------------------------------
+// Extern Definitions
+//----------------------------------------
+
+// drv_dp function
+function void Driver::drv_dp(int tt);
+	$display("@%0d :: PKT_ID [%0d] PADDR = 0x%0h, PWDATA = 0x%0h \n",tt, vif.PADDR, vif.PWDATA);
 endfunction
 
+// rst_apb task
+task Driver::rst_apb();
+
+	// wait for PRESETn to transit low and drive default '0' 
+	// value to inputs and remain in IDLE state
+	wait(!vif.PRESETn)
+	begin
+		vif.PWDATA <= 8'h0000_0000;
+		vif.PADDR  <= 8'h0000_0000;
+		vif.ENABLE <= 1'b0;
+		vif.PWRITE <= 1'b0;
+		$display("@%0t :: PRESETn ACTIVE",$time);
+		$display("----------------------------\n",);
+	end
+
+	// After Four clock edges drive the data
+	repeat(4) @(vif.drv_cb);
+
+endtask : rst_apb
+
+// run task
+task run();
+	forever 
+	begin
+		// creating new transaction object
+		trnx = new();
+
+		// Using get method to get pin activity for DUT
+		agt2drv.get(trnx);
+
+		// Deep copying trnx object to trnx_c
+		trnx_c = trnx.copy();
+
+		// Driving at drv_cb clocking block
+		@(vif.drv_cb) 
+		begin
+			vif.PENABLE <= trnx_c.PENABLE;
+			vif.PREADY  <= trnx_c.PREADY;
+			vif.PADDR   <= trnx_c.PADDR;
+			vif.PWRITE  <= trnx_c.PWRITE;
+			vif.PWDATA	<= trnx_c.PWDATA;
+		end
+
+		// Displaying the contents to be driven
+		drv_dp($time);
+
+		end
+	endtask : run
 endpackage : driver_pkg
