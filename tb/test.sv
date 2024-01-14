@@ -19,7 +19,7 @@ package test_pkg;
 			env.run(20);
 
 			// Clean up task after running 
-			env.wrap_up();
+			// env.wrap_up();
 
 			// exiting simulation after 1000 time units
 			#1000 $finish();

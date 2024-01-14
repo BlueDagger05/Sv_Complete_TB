@@ -21,7 +21,7 @@ class Driver;
 //----------------------------------------
 // Functions
 //----------------------------------------
-	extern virtual function void drv_dp();
+	extern virtual function void drv_dp(int tt);
 	
 //----------------------------------------
 // APB Slave Reset task
@@ -31,8 +31,17 @@ class Driver;
 //----------------------------------------
 // APB Slave Main run task
 //----------------------------------------
-	extern virtual task run();
+	extern virtual task main_run();
 
+//----------------------------------------
+// APB Slave write task
+//----------------------------------------
+	extern virtual task write(Transaction wr_trnx);
+
+//----------------------------------------
+// APB Slave read task
+//----------------------------------------
+	extern virtual task read(Transaction rd_trnx);
 
 endclass : Driver
 
@@ -65,8 +74,8 @@ task Driver::rst_apb();
 
 endtask : rst_apb
 
-// run task
-task run();
+// main_run task
+task main_run();
 	forever 
 	begin
 		// creating new transaction object
@@ -78,19 +87,64 @@ task run();
 		// Deep copying trnx object to trnx_c
 		trnx_c = trnx.copy();
 
-		// Driving at drv_cb clocking block
-		@(vif.drv_cb) 
-		begin
-			vif.PENABLE <= trnx_c.PENABLE;
-			vif.PREADY  <= trnx_c.PREADY;
-			vif.PADDR   <= trnx_c.PADDR;
-			vif.PWRITE  <= trnx_c.PWRITE;
-			vif.PWDATA	<= trnx_c.PWDATA;
-		end
+		// calling write task
+		if(trnx_c.id_wr)
+			write(trnx_c);
+
+		// calling read task
+		else
+			read(trnx_c);
 
 		// Displaying the contents to be driven
 		drv_dp($time);
 
+	end
+endtask : main_run
+
+// write task
+
+task Driver:: write(Transaction wr_trnx);
+	forever 
+	begin
+		@(vif.drv_cb)
+		begin
+			// Setup Phase
+			vif.PWRITE <= 1'b1;
+			vif.PSEL   <= 1'b1;
+			vif.PADDR  <= wr_trnx.PADDR;
+			vif.PWDATA <= wr_trnx.PWDATA;
+
+			// ACCESS PHASE
+			@(vif.PCLK)
+			vif.PENABLE <= 1'b1;
+			vif.PREADY  <= 1'b1;
+
+			// IDLE STATE
+			@(vif.PCLK)
+			vif.PENABLE <= 1'b0;
 		end
-	endtask : run
+	end
+endtask
+
+task Driver:: read(Transaction rd_trnx);
+forever 
+begin
+	@(vif.drv_cb)
+	begin
+		// Setup Phase
+		vif.PWRITE <= 1'b0;
+		vif.PSEL   <= 1'b1;
+		vif.PADDR  <= rd_trnx.PADDR;
+
+		// ACCESS PHASE
+		@(vif.PCLK)
+		vif.PENABLE <= 1'b1;
+		vif.PREADY  <= 1'b1;
+
+		// IDLE STATE
+		@(vif.PCLK)
+		vif.PENABLE <= 1'b0;
+	end
+end
+endtask 	
 endpackage : driver_pkg

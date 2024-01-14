@@ -14,14 +14,14 @@ class Transaction;
 // Transaction fields
 //------------------------------
 
-	randc bit 					 PENABLE;
-	randc bit 					 PREADY;	
 	randc bit [`ADDR_WIDTH -1:0] PADDR;
 	randc bit 					 PWRITE;
-	randc bit [`DATA_WIDTH -1:0] PWDATA;
-	rand apb_states st;
-
-	bit PRESETn;
+	 rand apb_states st;
+	      bit 					 PENABLE;
+		  bit 					 PREADY;	
+		  bit [`DATA_WIDTH -1:0] PWDATA;
+	 	  bit  is_rd, is_wr;
+		  bit PRESETn;
 
 //------------------------------
 // Constraints

@@ -52,6 +52,9 @@ interface apb_slave_ifc (input bit PCLK, PRESETn);
 	// Modport for monitor
 	modport MON (clocking mon_cb);
 
+	// Modport for Test
+	modport TEST (output PENABLE, PREADY, PADDR, PWDATA, PRESETn, PCLK, input PRDATA);
+	
 endinterface : apb_slave_ifc
 
 endpackage : apb_pkg

@@ -40,7 +40,7 @@ endfunction
 
 
 // run task
-task Monitor::run();
+virtual task Monitor::run();
 	forever begin
 
 		trnx = new();
@@ -48,19 +48,37 @@ task Monitor::run();
 
 		@(vif.mon_cb)
 		begin
-			trnx.PADDR 	 = vif.PADDR;
-			trnx.PWDATA  = vif.PWDATA;	
-			trnx.PRESETn = vif.PRESETn;
-			trnx.PENABLE = vif.PENABLE;
-			trnx.PWRITE  = vif.PWRITE;
-			trnx.PREADY  = vif.PREADY;
+			if(vif.PWRITE)
+			begin
+				trnx.is_wr   = 1'b1;
+				trnx.PADDR 	 = vif.PADDR;
+				trnx.PWDATA  = vif.PWDATA;	
+				trnx.PRESETn = vif.PRESETn;
+				trnx.PENABLE = vif.PENABLE;
+				trnx.PWRITE  = vif.PWRITE;
+				trnx.PREADY  = vif.PREADY;
+
+				// Copying trnx object ot trnx_wr object
+				trnx_wr = trnx.copy();
+				mon2chkr.put(trnx_wr);
+			end
+
+			else 
+			begin
+				trnx.is_rd   = 1'b1;
+				trnx.PADDR 	 = vif.PADDR;
+				trnx.PWDATA  = vif.PWDATA;	
+				trnx.PRESETn = vif.PRESETn;
+				trnx.PENABLE = vif.PENABLE;
+				trnx.PWRITE  = vif.PWRITE;
+				trnx.PREADY  = vif.PREADY;
+
+				// Copying trnx object ot trnx_rd object
+				trnx_rd = trnx.copy();
+				mon2chkr.put(trnx_rd);
+			end
 		end
 
-		// Copying trnx object into trnx_c
-		trnx_c = trnx.copy();
-
-		// Using put method to send data object to checker
-		mon2chkr.put(trnx_c);
 	end
 endtask
 endpackage : monitor_pkg

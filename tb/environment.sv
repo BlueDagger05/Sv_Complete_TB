@@ -1,6 +1,7 @@
 package environment_pkg;
 
 	// importing packages
+	import transaction_pkg::*;
 	import generator_pkg::*;
 	import agent_pkg::*;
 	import driver_pkg::*;
@@ -39,28 +40,28 @@ package environment_pkg;
 		agt  = new(gen2agt, agt2drv, agt2chkr); // kindly check
 		drv  = new(agt2drv);
 		mon  = new(mon2chkr);
-		chkr = new(agt2chkr, mon2chkr, chkr2scb);
+		chkr = new(mon2chkr, chkr2scb);
 		scb  = new(agt2scb, chkr2scb);
 
-		// run task to control individual run tasks of classes
-		virtual task run(int pktCount);
-			fork
-				gen.run(pktCount);
-				agt.run(pktCount);
-				drv.run();
-				mon.run();
-				scb.run();
-				chkr.run();
-			join_none
-		endtask : run
+	endfunction: build
 
-		// clean up task 
-		virtual task wrap_up();
-			// Empty
-		endtask : wrap_up
+	// run task to control individual run tasks of classes
+	virtual task run(int pktCount);
+		fork
+			gen.run(pktCount);
+			agt.run(pktCount);
+			drv.run();
+			mon.run();
+			scb.run();
+			chkr.run(pktCount);
+		join_none
+	endtask : run
 
+	// clean up task 
+	virtual task wrap_up();
+		// Empty
+	endtask : wrap_up
 
-	endfunction : build
-	endclass : Environment
+endclass : Environment
 
 endpackage : environment_pkg

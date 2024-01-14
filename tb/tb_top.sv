@@ -14,8 +14,8 @@ module tb_top;
 // interface instance	
 	design_ifc ifc(.clk(clk));
 
-// connceting DUT with modport DUT defined interface
-	design DUT(ifc.DUT);
+// connceting DUT with modport APB_SLV defined interface
+	design DUT(ifc.APB_SLV);
 
 // Generating Clock	
 	initial
@@ -32,10 +32,12 @@ module tb_top;
 		forever #(resetPeriod/2) rst = ~rst;
 	end: reset_generation
 
+	Test t0(.apb_slave_ifc(ifc.TEST));
+// Scratch logic
 // Invoking Test
 // Binding sample_test with modport TEST
 // connecting test program with interface
 // Test t1(.ifc(ifc.TEST);
-Test t1(.ifc(ifc.TEST));
+
 
 endmodule : tb_top

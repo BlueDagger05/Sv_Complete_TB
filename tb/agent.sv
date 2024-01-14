@@ -2,7 +2,7 @@ package agent_pkg;
 
 	// importing generator_pkg
 	import generator_pkg::Generator;
-	class agent;
+	class Agent;
 
 		// Transactionear class object -> agt_trnx
 		Transaction agt_trnx;
@@ -22,43 +22,40 @@ package agent_pkg;
 
 		// run task which will process the raw data sent from the transaction class
 		// Correct data will be sent to the Driver 
+		extern virtual task run();
 
-		task run(int numOfPackets);
-			// allocating memory to the object
-			trnx = new();
-			repeat(numOfPackets) 
-			begin
-				// Using get method of mailbox to get trnx object values
-				gen2agt.get(trnx)
+	endclass : Agent
 
-				// copying trnx object 
-				trnx_c = trnx.copy();
+//------------------------------
+// Run Task
+//------------------------------
+task Agent::run(int numOfPackets);
+	// allocating memory to the object
+	trnx = new();
+	repeat(numOfPackets) 
+	begin
+		// Using get method of mailbox to get trnx object values
+		gen2agt.get(trnx)
 
-				// Toggling case as per randomized states
-				case(trnx.st)
+		// copying trnx object 
+		trnx_c = trnx.copy();
+		
+		// Transmitting write packet
+		if(trnx_c.PWRITE)
+		begin
+			// updating ir_wr field
+			trnx_c.is_wr = 1'b1;
+			agt2drv.put(trnx_c);		
+		end	
 
-					//IDLE state
-					st.IDLE:
-					begin
-						// Do nothing
-					end
-	
-					// Setup State
-					st.SETUP:
-					begin
-						// input addr and data must be stable in setup phase
-						agt2drv.put(trnx_c);
-					end
-	
-					// Access State
-					st.ACCESS:
-					begin
-						// Do nothing
-					end
+		// Transmitting read packet
+		else
+		begin
+			// updating is_rd field
+			trnx_c.is_rd = 1'b1;
+			agt2drv.put(trnx_c);
+		end
+	end
+endtask : run
 
-				endcase // current_state
-			end
-		endtask : run
-
-	endclass : agent
 endpackage : agent_pkg
