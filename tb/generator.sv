@@ -11,7 +11,7 @@ package generator_pkg;
 
 		// int variable for counting packet
 		int pktCount = 0;
-
+		int numOfPackets;
 		// new constructor parameterized with mailbox
 		// parameterized mailbox as input to the class Generator
 		function new(input mailbox #(Transaction) gen2agt);
@@ -19,10 +19,10 @@ package generator_pkg;
 		endfunction : new
 
 		// Display functions
-		extern function void gen_display();
+		extern function void gen_display(int);
 
 		// run task which will generate pin level activity for DUT
-		task run(int numOfPackets);
+		task run(numOfPackets);
 
 			// using repeat loop for generating n number of packets 
 			repeat(numOfPackets) 

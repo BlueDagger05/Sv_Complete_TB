@@ -1,9 +1,9 @@
 package checker_pkg;
-import apb_slave_ifc::*;
 import transaction_pkg::*;
 	
 class Checker;
-	mailbox #(Transaction) mon2chkr, #(Transaction) chkr2scb;	
+	mailbox #(Transaction) mon2chkr;
+	mailbox #(Transaction) chkr2scb;	
 	
 	// Denotes number of packets
 	int numofPackets = 0;
@@ -17,26 +17,24 @@ class Checker;
 //------------------------------
 // Run Task
 //------------------------------
-	extern virtual task run(numofPackets);
+	extern virtual task run(int);
+	
 endclass: Checker	
 
 // Run task
-task virtual Checker:: run(int numofPackets);
-	Transaction trnx_chkr2scb, trnx_mon2chkr;
+task Checker:: run(int numofPackets);
+    // Creating object 
+	Transaction trnx_chkr2scb, trnx_mon2chkr = new;
+	Transaction is_good_wr, is_good_rd = new;
 	repeat(numofPackets)
 	begin
-
-		// Creating object 
-		trnx_chkr2scb = new;
-		trnx_mon2chkr = new;
-
 		mon2chkr.get(trnx_mon2chkr);
 
 		// forwarding those packets having valid read
-		is_good_rd = trnx_mon2chkr.copy();
+		is_good_rd.copy(trnx_mon2chkr);
 
 		// forwarding those packets having valid write
-		is_good_wr = trnx_mon2chkr.copy();
+		is_good_wr.copy(trnx_mon2chkr);
 
 		// valid read if not in reset state
 		if( ~is_good_rd.PWRITE && is_good_rd.PRESETn )
@@ -48,9 +46,11 @@ task virtual Checker:: run(int numofPackets);
 
 		// experimental
 		// Discarding bad packets
-		else
-			{is_good_rd, is_good_wr} = null;
-
+		else 
+		begin
+			is_good_rd = null;
+			is_good_wr = null;
+        end
 	end
 endtask
 

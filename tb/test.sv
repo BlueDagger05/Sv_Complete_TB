@@ -1,9 +1,9 @@
-package test_pkg;
+//package test_pkg;
 	// importing environment package
-	import environment_pkg::Environment;
+	import environment_pkg::*;
 
 	// change the interface name if required
-	program automatic Test(design_if.TEST ifc);
+	program automatic Test(apb_slave_ifc ifc);
 		Environment env;
 
 		initial
@@ -15,8 +15,8 @@ package test_pkg;
 			// building environment objects
 			env.build();
 
+			env.pktCount = 20;
 			// running corresponding run tasks of classes
-			env.run(20);
 
 			// Clean up task after running 
 			// env.wrap_up();
@@ -25,4 +25,3 @@ package test_pkg;
 			#1000 $finish();
 		end
 	endprogram: Test
-endpackage : test_pkg

@@ -5,7 +5,7 @@ package environment_pkg;
 	import generator_pkg::*;
 	import agent_pkg::*;
 	import driver_pkg::*;
-	import monitor_pkg::*
+	import monitor_pkg::*;
 	import checker_pkg::*;
 	import scoreboard_pkg::*;
 
@@ -17,12 +17,20 @@ package environment_pkg;
 		Driver 		drv;
 		Monitor 	mon;
 		Scoreboard 	scb;
-		Checker 	ckhr;
+		Checker 	chkr;
 
 	// mailboxes
-	mailbox #(Transaction) gen2agt, #(Transaction) chkr2scb, #(Transaction) agt2scb;
-	mailbox #(Transaction) agt2drv, #(Transaction) agt2chkr, #(Transaction) mon2chkr;
+	mailbox #(Transaction) gen2agt;
+	mailbox #(Transaction) chkr2scb;
+	mailbox #(Transaction) agt2scb;
+	mailbox #(Transaction) agt2drv;
+	mailbox #(Transaction) agt2chkr;
+	mailbox #(Transaction) mon2chkr;
 
+    // interface 
+    virtual apb_slave_ifc vif;
+    
+    int pktCount;
 	virtual function void build();
 
 		// Unbounded Mailbox
@@ -37,26 +45,35 @@ package environment_pkg;
 
 		// Constructing TB components
 		gen  = new(gen2agt);
-		agt  = new(gen2agt, agt2drv, agt2chkr); // kindly check
-		drv  = new(agt2drv);
-		mon  = new(mon2chkr);
+		agt  = new(agt2drv, gen2agt,agt2scb); // kindly check
+		drv  = new(agt2drv, vif);
+		mon  = new(mon2chkr, vif);
 		chkr = new(mon2chkr, chkr2scb);
 		scb  = new(agt2scb, chkr2scb);
 
 	endfunction: build
 
 	// run task to control individual run tasks of classes
-	virtual task run(int pktCount);
+	 task run(pktCount);
 		fork
 			gen.run(pktCount);
 			agt.run(pktCount);
-			drv.run();
+			drv.main_run();
 			mon.run();
 			scb.run();
 			chkr.run(pktCount);
 		join_none
 	endtask : run
 
+	task post_run();
+		wait(drv.count == 20);
+	endtask : post_run
+
+	task main();
+		run(pktCount);
+		// post_run();
+		//$finish;
+	endtask: main
 	// clean up task 
 	virtual task wrap_up();
 		// Empty

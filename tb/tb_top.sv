@@ -1,5 +1,6 @@
 `include "interface.sv"
-import test_pkg::Test;
+//import test_pkg::Test;
+`include "test.sv"
 
 module tb_top;
 //----------------------------------------
@@ -12,16 +13,18 @@ module tb_top;
 	localparam resetPeriod = 200;
 
 // interface instance	
-	design_ifc ifc(.clk(clk));
+	apb_slave_ifc ifc (.PCLK(clk), .PRESETn(rst));
 
+// Test instantiation
+	Test t0 (ifc);
 // connceting DUT with modport APB_SLV defined interface
-	design DUT(ifc.APB_SLV);
+	apb_slave DUT (ifc.APB_SLV);
 
 // Generating Clock	
 	initial
 	begin: clock_generation
-		clk = 1'b;
-		forever #(timePeriod/2) clk = ~clk
+		clk = 1'b0;
+		forever #(timePeriod/2) clk = ~clk;
 	end: clock_generation
 
 
@@ -32,7 +35,6 @@ module tb_top;
 		forever #(resetPeriod/2) rst = ~rst;
 	end: reset_generation
 
-	Test t0(.apb_slave_ifc(ifc.TEST));
 // Scratch logic
 // Invoking Test
 // Binding sample_test with modport TEST

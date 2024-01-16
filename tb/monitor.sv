@@ -2,13 +2,15 @@ package monitor_pkg;
 
 // Importing packages	
 import transaction_pkg::*;
-import apb_pkg::*;
 		
 class Monitor;
 	Transaction trnx, trnx_c;
 	mailbox #(Transaction) mon2chkr;
 
 	virtual apb_slave_ifc vif;
+
+static int ID;
+int count = 0;
 
 // New Constructor	
 //  parameterized new function with mailbox and virtual apb_slave_ifc
@@ -20,7 +22,7 @@ class Monitor;
 //----------------------------------------
 // Functions
 //----------------------------------------
-	extern virtual function void mon_dp();
+	extern virtual function void mon_dp(int tt, int, bit[7:0], bit[7:0], bit [7:0]);
 
 //----------------------------------------
 // APB Slave Main run task
@@ -34,16 +36,20 @@ endclass: Monitor
 //----------------------------------------
 
 	// mon_dp function
-function void Monitor::mon_dp(int tt);
-	$display("@%0d :: PKT_ID [%0d] PADDR = 0x%0h, PWDATA = 0x%0h \n",tt, vif.PADDR, vif.PWDATA);
+function void Monitor::mon_dp(int tt, int ID, bit[7:0] PADDR, bit[7:0] PWDATA, bit [7:0] PRDATA);
+	$display("@%0d :: PKT_ID [%0d] PADDR = 0x%0h, PWDATA = 0x%0h \n",tt, ID, PADDR, PWDATA, PRDATA);
 endfunction
 
 
 // run task
-virtual task Monitor::run();
+task Monitor::run();
+    Transaction trnx, trnx_wr, trnx_rd;
 	forever begin
 
-		trnx = new();
+		trnx 	= new;
+		trnx_wr = new;
+		trnx_rd = new;
+		trnx_c  = new;
 		// Getting data from vif and storing in trnx objects
 
 		@(vif.mon_cb)
@@ -59,8 +65,9 @@ virtual task Monitor::run();
 				trnx.PREADY  = vif.PREADY;
 
 				// Copying trnx object ot trnx_wr object
-				trnx_wr = trnx.copy();
+				trnx_wr.copy(trnx);
 				mon2chkr.put(trnx_wr);
+				mon_dp($time, ID, vif.PADDR, vif.PWDATA, vif.PRDATA);
 			end
 
 			else 
@@ -74,9 +81,12 @@ virtual task Monitor::run();
 				trnx.PREADY  = vif.PREADY;
 
 				// Copying trnx object ot trnx_rd object
-				trnx_rd = trnx.copy();
+				trnx_rd.copy(trnx);
 				mon2chkr.put(trnx_rd);
+				mon_dp($time, ID, vif.PADDR, vif.PWDATA, vif.PRDATA);
 			end
+
+			ID = count++;
 		end
 
 	end

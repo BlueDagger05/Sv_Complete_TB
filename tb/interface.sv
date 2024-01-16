@@ -1,8 +1,7 @@
-`include "defines.sv"
-package apb_pkg;
-
+`define DATA_WIDTH 8
+`define ADDR_WIDTH 8
 // interface declaration and definition	
-interface apb_slave_ifc (input bit PCLK, PRESETn);
+interface apb_slave_ifc (input logic PCLK, logic PRESETn);
 
 //----------------------------------------
 // add your signals
@@ -17,6 +16,7 @@ interface apb_slave_ifc (input bit PCLK, PRESETn);
 	logic [`ADDR_WIDTH -1:0] PADDR;
 	logic 					 PWRITE;
 	logic [`DATA_WIDTH -1:0] PWDATA;
+	logic                    PSELx;
 
 //----------------------------------------	
 // clocking blocks
@@ -24,8 +24,9 @@ interface apb_slave_ifc (input bit PCLK, PRESETn);
 
 	// Driver CB
 	clocking drv_cb @(posedge PCLK);
+		default input #1 output	#1;
 		input   PRDATA;
-		output  PENABLE, PREADY, PADDR, PWDATA, PRESETn;
+		output  PENABLE, PREADY, PADDR, PWRITE, PWDATA, PSELx;
 	endclocking: drv_cb
 
 	// APB-Slave CB
@@ -44,17 +45,16 @@ interface apb_slave_ifc (input bit PCLK, PRESETn);
 //----------------------------------------
 	
 	// Modport for driver
-	modport DRV (clocking drv_cb);
+	modport DRV (clocking drv_cb, input PCLK, input PRESETn);
 
 	// Modport for APB-Slave DUT
-	modport APB_SLV (clocking slv_cb);
+	modport APB_SLV (output  PRDATA, input  PENABLE, PREADY, PADDR, PWDATA, PRESETn, PCLK, PSELx, PWRITE);
 
 	// Modport for monitor
 	modport MON (clocking mon_cb);
 
 	// Modport for Test
-	modport TEST (output PENABLE, PREADY, PADDR, PWDATA, PRESETn, PCLK, input PRDATA);
+	//modport TEST (output PENABLE, PREADY, PADDR, PWDATA, PRESETn, PCLK, PSELx, PWRITE, input PRDATA);
 	
 endinterface : apb_slave_ifc
 
-endpackage : apb_pkg
